@@ -1,4 +1,4 @@
-from z80 import registers
+from src.z80 import registers
 import unittest
 
 class TestZ80Registers(unittest.TestCase):
@@ -27,6 +27,3 @@ class TestZ80Registers(unittest.TestCase):
         
 if __name__ == '__main__':
     unittest.main()
-    raw_input()
-    
-    
