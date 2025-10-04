@@ -1,9 +1,21 @@
 import unittest
+from typing import Iterable
 
 from src.z80 import registers
 
-FLAGS = ("S", "Z", "F5", "H", "F3", "PV", "N", "C")
+FLAGS = [f if isinstance(f, list) else [f] for f in
+         ("S", "Z", "F5", "H", "F3", ["PV", "P", "V"], "N", "C")]
 PAIRS = ("AF", "BC", "DE", "HL")
+
+
+def flatten(items):
+    """Yield items from any nested iterable; see https://stackoverflow.com/a/40857703/1329652."""
+    for x in items:
+        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
+            for sub_x in flatten(x):
+                yield sub_x
+        else:
+            yield x
 
 
 class TestZ80Registers(unittest.TestCase):
@@ -35,22 +47,24 @@ class TestZ80Registers(unittest.TestCase):
 
     def test_condition_set(self):
         for i, reg in enumerate(FLAGS):
-            self.registers.F = 0x0
-            setattr(self.registers.condition, reg, True)
-            self.assertEqual(self.registers.F, 0x01 << (7 - i))
+            for r in reg:
+                self.registers.F = 0x0
+                setattr(self.registers.condition, r, True)
+                self.assertEqual(self.registers.F, 0x01 << (7 - i))
 
-            for reg2 in FLAGS:
-                if reg2 != reg:
+            for reg2 in flatten(FLAGS):
+                if reg2 not in reg:
                     self.assertEqual(bool(getattr(self.registers.condition, reg2)), False)
 
     def test_condition_clear(self):
         for i, reg in enumerate(FLAGS):
-            self.registers.F = 0xFF
-            setattr(self.registers.condition, reg, False)
-            self.assertEqual(self.registers.F, 0xFF - (0x01 << (7 - i)))
+            for r in reg:
+                self.registers.F = 0xFF
+                setattr(self.registers.condition, r, False)
+                self.assertEqual(self.registers.F, 0xFF - (0x01 << (7 - i)))
 
-            for reg2 in FLAGS:
-                if reg2 != reg:
+            for reg2 in flatten(FLAGS):
+                if reg2 not in reg:
                     self.assertEqual(bool(getattr(self.registers.condition, reg2)), True)
 
     def test_condition_set_notZ(self):
@@ -58,7 +72,7 @@ class TestZ80Registers(unittest.TestCase):
         self.registers.condition.notZ = False
         self.assertEqual(self.registers.F, 0x01 << (7 - 1))
 
-        for reg2 in FLAGS:
+        for reg2 in flatten(FLAGS):
             if reg2 != "Z":
                 self.assertEqual(bool(getattr(self.registers.condition, reg2)), False)
 
@@ -67,7 +81,7 @@ class TestZ80Registers(unittest.TestCase):
         self.registers.condition.notZ = True
         self.assertEqual(self.registers.F, 0xFF - (0x01 << (7 - 1)))
 
-        for reg2 in FLAGS:
+        for reg2 in flatten(FLAGS):
             if reg2 != "Z":
                 self.assertEqual(bool(getattr(self.registers.condition, reg2)), True)
 

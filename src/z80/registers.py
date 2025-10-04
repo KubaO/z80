@@ -99,6 +99,9 @@ class Flags:
         else:
             self._regs.AF &= 0xFFFB
 
+    P = PV
+    V = PV
+
     @N.setter
     def N(self, val):
         if val:
